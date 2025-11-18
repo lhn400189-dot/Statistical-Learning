@@ -1,0 +1,140 @@
+---
+title: "Problem B.1"
+author: "Haonan LI"
+date: "2025-03-27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+Sys.setenv(LANG = "en")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r cars}
+# Problem B.1
+
+# (a)
+# Load the libraries
+library(ISLR)
+attach(Carseats)
+
+# Setting the random seed
+set.seed(1)
+
+# Divide the dataset into a training set and a test set
+train <- sample(dim(Carseats)[1], dim(Carseats)[1] / 2)
+Carseats.train <- Carseats[train, ]
+Carseats.test <- Carseats[-train, ]
+
+# (b)
+library(tree)
+# Training regression tree
+tree.carseats <- tree(Sales ~ ., data = Carseats.train)
+summary(tree.carseats)
+
+# Tree diagrams
+plot(tree.carseats, 
+     main = "Decision Tree for Carseats Data",
+     cex = 0.5,              
+     margin = 0.05)           
+
+
+text(tree.carseats, 
+     pretty = 0,             
+     cex = 0.5) 
+
+# Prediction with test sets
+yhat <- predict(tree.carseats, newdata = Carseats.test)
+
+# Calculate the mean square error of the test set
+test_mse <- mean((yhat - Carseats.test$Sales)^2)
+cat("Test MSE:", test_mse, "\n")
+
+# (c)
+# Cross-validation
+cv.carseats <- cv.tree(tree.carseats, FUN = prune.tree)
+print(cv.carseats)
+
+# Plot the tree for cross-validation
+par(mfrow = c(1, 2))
+plot(cv.carseats$size, cv.carseats$dev, type = "b")
+plot(cv.carseats$k, cv.carseats$dev, type = "b")
+
+# Prediction for unpruned complete tree (size = 18)
+yhat_full <- predict(tree.carseats, newdata = Carseats.test)
+mse_full <- mean((yhat_full - Carseats.test$Sales)^2)
+cat("Test MSE of Full Tree (size = 18):", mse_full, "\n")
+
+# Predictions for pruned trees (size = 9)
+pruned.carseats <- prune.tree(tree.carseats, best = 9)
+yhat_pruned <- predict(pruned.carseats, newdata = Carseats.test)
+mse_pruned <- mean((yhat_pruned - Carseats.test$Sales)^2)
+cat("Test MSE of Pruned Tree (size = 9):", mse_pruned, "\n")
+
+# The test MSEs are almost identical, indicating that pruning the tree 
+# did not significantly improve model performance. Therefore, 
+# pruning is not necessary for this specific dataset.
+
+# (d)
+library(randomForest)
+
+# Training the Bagging Model
+bagging.model <- randomForest(Sales ~ ., 
+                              data = Carseats.train, 
+                              mtry = 10, 
+                              importance = TRUE)
+
+# Predictions on the test set
+yhat_bagging <- predict(bagging.model, newdata = Carseats.test)
+
+# Compute the test set MSE
+mse_bagging <- mean((yhat_bagging - Carseats.test$Sales)^2)
+cat("Test MSE of Bagging Model:", mse_bagging, "\n")
+
+# Importance of display variables
+importance(bagging.model)
+
+# The Price variable is the most important predictor, 
+# as removing it causes the largest increase in test MSE.
+# ShelveLoc and CompPrice are also highly influential.
+
+# (e)
+rf.carseats <- randomForest(Sales ~ ., data = Carseats.train, mtry = 5, ntree = 500, 
+                            importance = TRUE)
+rf.pred <- predict(rf.carseats, Carseats.test)
+mean((Carseats.test$Sales - rf.pred)^2)
+
+importance(rf.carseats)
+
+# Price and ShelveLoc are the two most important variables.
+# Using a moderate value of m (such as mtry = 5) provides the best performance 
+# by minimizing the test error rate. Increasing m too much leads to overfitting, 
+# while reducing m too much results in underfitting.
+
+# (f)
+library(BART)
+
+# Converting predictor variables into model matrices
+predictor_names <- setdiff(names(Carseats.train), "Sales")
+x.train <- model.matrix(~ . - 1, data = Carseats.train[, predictor_names])
+x.test <- model.matrix(~ . - 1, data = Carseats.test[, predictor_names])
+y.train <- Carseats.train$Sales
+
+# Setting random seed 
+set.seed(1)
+
+# Fitting the BART model
+bart.fit <- wbart(x.train = x.train, 
+                  y.train = y.train, 
+                  x.test = x.test, 
+                  ndpost = 1000, 
+                  nskip = 100)
+
+# Prediction for the test set
+yhat_bart <- apply(bart.fit$yhat.test, 2, mean)
+
+# Calculate the MSE
+mse_bart <- mean((yhat_bart - Carseats.test$Sales)^2)
+cat("Test MSE for BART:", mse_bart, "\n")
+
+# The BART model obtained the lowest test MSE in this experiment

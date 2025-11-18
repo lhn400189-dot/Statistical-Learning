@@ -1,0 +1,111 @@
+---
+title: "Problem B3"
+author: "Haonan LI"
+date: "2025-01-29"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r cars}
+# (a)
+set.seed(1)
+x <- rnorm(100)
+y <- x - 2 * x^2 + rnorm(100)
+
+# 1. What is 'n'?
+# n = 100, which represents the number of observations in the dataset.
+
+# 2. What is 'p'?
+# p = 2, as there is two predictor variable (X) in the dataset.
+
+# 3. Write the model in equation form:
+# The model used to generate the data is:
+# Y = X - 2X^2 + epsilon, where epsilon ~ N(0, 1).
+
+# (b) Create a scatterplot of X against Y
+# Generate the scatterplot
+plot(x, y, main = "Scatterplot of X vs Y", xlab = "X (Predictor)", 
+     ylab = "Y (Response)", pch = 19,  col = "blue")
+
+lines(sort(x), (sort(x) - 2 * sort(x)^2), col = "red", lwd = 2)
+# The scatterplot shows a clear non-linear relationship between X and Y, 
+# matching the model Y = X - 2X^2 + epsilon, with noise causing slight variability.
+
+#(c)
+# For LOOCV function
+library(boot)
+
+# Create a data frame containing X and Y
+data <- data.frame(x, y)
+
+# Define four models
+model1 <- glm(y ~ x, data = data)
+model2 <- glm(y ~ x + I(x^2), data = data)
+model3 <- glm(y ~ x + I(x^2) + I(x^3), data = data)
+model4 <- glm(y ~ x + I(x^2) + I(x^3) + I(x^4), data = data)
+
+# Calculate the LOOCV error for each model
+cv_error1 <- cv.glm(data, model1)$delta[1]
+cv_error2 <- cv.glm(data, model2)$delta[1]
+cv_error3 <- cv.glm(data, model3)$delta[1]
+cv_error4 <- cv.glm(data, model4)$delta[1]
+
+# Output LOOCV Error
+cat("LOOCV Error for Model 1 (Linear):", cv_error1, "\n")
+cat("LOOCV Error for Model 2 (Quadratic):", cv_error2, "\n")
+cat("LOOCV Error for Model 3 (Cubic):", cv_error3, "\n")
+cat("LOOCV Error for Model 4 (Quartic):", cv_error4, "\n")
+
+# (d)
+set.seed(23)
+
+# Generate new data
+x_new <- rnorm(100)
+y_new <- x_new - 2 * x_new^2 + rnorm(100)
+data_new <- data.frame(x = x_new, y = y_new)
+
+# Define new models
+model1_new <- glm(y ~ x, data = data_new)
+model2_new <- glm(y ~ x + I(x^2), data = data_new)
+model3_new <- glm(y ~ x + I(x^2) + I(x^3), data = data_new)
+model4_new <- glm(y ~ x + I(x^2) + I(x^3) + I(x^4), data = data_new)
+
+# Compute LOOCV errors for the new data
+cv_error1_new <- cv.glm(data_new, model1_new)$delta[1]
+cv_error2_new <- cv.glm(data_new, model2_new)$delta[1]
+cv_error3_new <- cv.glm(data_new, model3_new)$delta[1]
+cv_error4_new <- cv.glm(data_new, model4_new)$delta[1]
+
+# Output LOOCV errors for new data
+cat("LOOCV Error for Model 1 (Linear):", cv_error1_new, "\n")
+cat("LOOCV Error for Model 2 (Quadratic):", cv_error2_new, "\n")
+cat("LOOCV Error for Model 3 (Cubic):", cv_error3_new, "\n")
+cat("LOOCV Error for Model 4 (Quartic):", cv_error4_new, "\n")
+
+# The calculated LOOCV errors have different values, but the trend 
+# is consistent, indicating that the model selection is stable.
+# The quadratic model still performs best on different datasets.
+# Linear model error is the largest.
+
+# (e)
+# The quadratic model had the smallest LOOCV error in (c).
+# The data generation process includes a quadratic term (-2X^2).
+
+# (f)
+# Print summary for each model to check coefficient significance
+summary(model1)
+summary(model2)  
+summary(model3) 
+summary(model4)
+
+# Best model: The quadratic model (Model 2), 
+# as its coefficients are significant and it has the smallest LOOCV error.
+
+# Consistency: The statistical significance of the coefficients 
+# aligns with the LOOCV results, both supporting 
+# the quadratic model as the best choice.
+
+```

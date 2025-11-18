@@ -1,0 +1,59 @@
+---
+title: "Problem B.1"
+author: "Haonan LI"
+date: "2025-04-11"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r cars}
+# Prepare the data 
+X <- matrix(c(
+  2.5, 2.4,
+  0.5, 0.7,
+  2.2, 2.9,
+  1.9, 2.2,
+  3.1, 3.0,
+  2.3, 2.7,
+  2.0, 1.6,
+  1.0, 1.1,
+  1.5, 1.6,
+  1.1, 0.9
+), ncol = 2, byrow = TRUE)
+
+colnames(X) <- c("X1", "X2")
+
+# Center the data 
+X_centered <- scale(X, center = TRUE, scale = FALSE)
+
+# Compute the covariance matrix
+cov_mat <- cov(X_centered)
+
+# Compute eigenvalues and eigenvectors 
+eig <- eigen(cov_mat)
+
+# Loadings: eigenvectors 
+loadings <- eig$vectors
+
+# Variance explained: proportion of variance for each principal component
+eigenvalues <- eig$values
+variance_explained <- eigenvalues / sum(eigenvalues)
+
+# Scores: project data onto principal component directions
+scores <- X_centered %*% loadings
+
+# Print results
+cat("=== Loadings ===\n")
+print(loadings)
+
+cat("\n=== Scores ===\n")
+print(scores)
+
+cat("\n=== Variance Explained ===\n")
+print(variance_explained)
+
+```
+

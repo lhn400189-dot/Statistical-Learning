@@ -1,0 +1,34 @@
+---
+title: "Problem B2"
+author: "Haonan LI"
+date: "2025-04-11"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+Sys.setenv(LANG = "en")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r cars}
+# Load required package
+library(ISLR)
+
+# Set seed for reproducibility
+set.seed(1)
+
+# Standardize the USArrests dataset (zero mean, unit variance)
+dsc <- scale(USArrests)
+
+# Compute squared Euclidean distances between observations
+a <- dist(dsc)^2
+
+# Compute correlation-based dissimilarity: 1 - correlation
+# Use transpose to compute correlation between variables, not observations
+b <- as.dist(1 - cor(t(dsc)))
+
+# Compute and summarize the ratio of correlation-based dissimilarity to squared Euclidean distance
+summary(b / a)
+
+```
+

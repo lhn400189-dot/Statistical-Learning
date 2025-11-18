@@ -1,0 +1,225 @@
+---
+title: "Problem B.2"
+author: "Haonan LI"
+date: "2025-02-15"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r cars}
+# Problem B.2
+
+#(a)
+# generate a predictor X and eps
+set.seed(1)
+X = rnorm(100)
+eps = rnorm(100)
+
+#(b)
+# Generate a response vector Y
+beta0 = 1
+beta1 = 2
+beta2 = 3
+beta3 = 4
+Y = beta0 + beta1 * X + beta2 * X^2 + beta3 * X^3 + eps
+
+#(c)
+library(leaps)
+# Use regsubsets to select best model having polynomial of X of degree 10
+data <- data.frame(Y = Y)
+for (i in 1:10) {
+  data[[paste0("X", i)]] <- X^i
+}
+
+# Perform optimal subset selection
+best_subset <- regsubsets(Y ~ ., data = data, nvmax = 10)
+
+# Extraction of selection indicators (Cp, BIC, Adjusted R^2)
+summary_best <- summary(best_subset)
+
+# Plotting selection indicator curves
+par(mfrow = c(1, 3))
+
+# Cp plot
+plot(summary_best$cp, type = "b", col = "blue", pch = 19, xlab = "Number of 
+     Variables", ylab = "Cp")
+which.min(summary_best$cp) -> best_cp
+points(best_cp, summary_best$cp[best_cp], col = "red", pch = 19)
+
+# BIC plot
+plot(summary_best$bic, type = "b", col = "blue", pch = 19, xlab = "Number of 
+     Variables", ylab = "BIC")
+which.min(summary_best$bic) -> best_bic
+points(best_bic, summary_best$bic[best_bic], col = "red", pch = 19)
+
+# Adjusted R^2 plot
+plot(summary_best$adjr2, type = "b", col = "blue", pch = 19, xlab = "Number of 
+     Variables", ylab = "Adjusted R^2")
+which.max(summary_best$adjr2) -> best_r2
+points(best_r2, summary_best$adjr2[best_r2], col = "red", pch = 19)
+
+# output Variable selection
+cat("Best model according to Cp:", best_cp, "variables\n")
+cat("Best model according to BIC:", best_bic, "variables\n")
+cat("Best model according to Adjusted R^2:", best_r2, "variables\n")
+
+# Obtaining regression coefficients for the best model
+best_model <- coef(best_subset, best_bic)  
+print(best_model)
+
+# Best model selection results:
+# - According to Cp: 4 variables
+# - According to BIC: 3 variables (X, X^2, X^3) - Preferred choice
+# - According to Adjusted R²: 4 variables
+# The BIC-selected model best matches the true data-generating process.
+
+
+#(d)
+# Perform best subset selection for comparison
+forward_model <- regsubsets(Y ~ ., data = data, nvmax = 10, method = "forward")
+summary_forward <- summary(forward_model)
+
+# Perform backward stepwise selection
+backward_model <- regsubsets(Y ~ ., data = data, nvmax = 10, method = "backward")
+summary_backward <- summary(backward_model)
+
+# Identify best model sizes for each selection criterion
+best_cp <- which.min(summary_best$cp)
+best_bic <- which.min(summary_best$bic)
+best_r2 <- which.max(summary_best$adjr2)
+
+best_cp_fwd <- which.min(summary_forward$cp)
+best_bic_fwd <- which.min(summary_forward$bic)
+best_r2_fwd <- which.max(summary_forward$adjr2)
+
+best_cp_bwd <- which.min(summary_backward$cp)
+best_bic_bwd <- which.min(summary_backward$bic)
+best_r2_bwd <- which.max(summary_backward$adjr2)
+
+# Compare the results
+cat("\nComparison of Best Models\n")
+cat("Best model size (Cp):\n")
+cat("- Best Subset Selection:", best_cp, "variables\n")
+cat("- Forward Stepwise Selection:", best_cp_fwd, "variables\n")
+cat("- Backward Stepwise Selection:", best_cp_bwd, "variables\n")
+
+cat("\nBest model size (BIC):\n")
+cat("- Best Subset Selection:", best_bic, "variables\n")
+cat("- Forward Stepwise Selection:", best_bic_fwd, "variables\n")
+cat("- Backward Stepwise Selection:", best_bic_bwd, "variables\n")
+
+cat("\nBest model size (Adjusted R^2):\n")
+cat("- Best Subset Selection:", best_r2, "variables\n")
+cat("- Forward Stepwise Selection:", best_r2_fwd, "variables\n")
+cat("- Backward Stepwise Selection:", best_r2_bwd, "variables\n")
+
+# Plot model selection criteria
+par(mfrow = c(1, 1))  
+par(mar = c(5, 4, 4, 2) + 0.1)  
+
+
+# Cp plot
+plot(summary_forward$cp, xlab = "Subset Size", ylab = "Forward Cp", 
+     pch = 20, type = "l")
+points(best_cp_fwd, summary_forward$cp[best_cp_fwd], pch = 4, 
+       col = "red", lwd = 7)
+plot(summary_backward$cp, xlab = "Subset Size", ylab = "Backward Cp", 
+     pch = 20, type = "l")
+points(best_cp_bwd, summary_backward$cp[best_cp_bwd], pch = 4, 
+       col = "red", lwd = 7)
+
+# BIC plot
+plot(summary_forward$bic, xlab = "Subset Size", ylab = "Forward BIC", 
+     pch = 20, type = "l")
+points(best_bic_fwd, summary_forward$bic[best_bic_fwd], pch = 4, 
+       col = "red", lwd = 7)
+plot(summary_backward$bic, xlab = "Subset Size", ylab = "Backward BIC", 
+     pch = 20, type = "l")
+points(best_bic_bwd, summary_backward$bic[best_bic_bwd], pch = 4, 
+       col = "red", lwd = 7)
+
+# Adjusted R^2 plot
+plot(summary_forward$adjr2, xlab = "Subset Size", 
+     ylab = "Forward Adjusted R2", pch = 20, type = "l")
+points(best_r2_fwd, summary_forward$adjr2[best_r2_fwd], pch = 4, 
+       col = "red", lwd = 7)
+plot(summary_backward$adjr2, xlab = "Subset Size", 
+     ylab = "Backward Adjusted R2", pch = 20, type = "l")
+points(best_r2_bwd, summary_backward$adjr2[best_r2_bwd], pch = 4, 
+       col = "red", lwd = 7)
+
+# Print the selected best model coefficients
+cat("\nBest Model Coefficients (Forward Stepwise Selection)\n")
+print(coef(forward_model, best_bic_fwd))
+
+cat("\nBest Model Coefficients (Backward Stepwise Selection)\n")
+print(coef(backward_model, best_bic_bwd))
+
+# Stepwise and best subset selection gave the same results.
+# - Cp & Adjusted R² chose 4 variables.
+# - BIC chose 3 variables (X, X², X³), the preferred model. 
+# - Stepwise selection is more efficient than best subset selection. 
+# - BIC helps prevent overfitting, so the 3-variable model is best.
+
+
+#(e)
+library(glmnet)
+
+data.full <- data
+xmat = model.matrix(Y ~ poly(X, 10, raw = T), data = data.full)[, -1]
+mod.lasso = cv.glmnet(xmat, Y, alpha = 1)
+best.lambda = mod.lasso$lambda.min
+cat("Best Lambda:", best.lambda, "\n")
+plot(mod.lasso)
+
+# Next fit the model on entire data using best lambda
+best.model = glmnet(xmat, Y, alpha = 1, lambda = best.lambda)
+lasso.coef <- predict(mod.lasso, s = best.lambda, type = "coefficients")
+print(lasso.coef)
+
+# Lasso correctly selected the key predictors.
+# - Kept X, X^2, and X^3 as important variables. 
+# - Removed X^6, X^8, X^9, and X^10 as unnecessary. 
+# - X^4, X^5, and X^7 had small coefficients, meaning minimal impact.
+# - Lasso automatically selects variables and prevents overfitting.
+
+
+#(f)
+# Create new Y with different B7=7
+beta7 = 7
+Y = beta0 + beta7 * X^7 + eps
+# Predict using regsubsets
+data.full = data.frame(y = Y, x = X)
+mod.full = regsubsets(y ~ poly(x, 10, raw = T), data = data.full, nvmax = 10)
+mod.summary = summary(mod.full)
+
+# Find the model size for best cp, BIC and adjr2
+which.min(mod.summary$cp)
+which.min(mod.summary$bic)
+which.max(mod.summary$adjr2)
+coefficients(mod.full, id = 1)
+coefficients(mod.full, id = 2)
+coefficients(mod.full, id = 4)
+
+# Variable selection with Lasso
+xmat = model.matrix(y ~ poly(x, 10, raw = T), data = data.full)[, -1]
+mod.lasso = cv.glmnet(xmat, Y, alpha = 1)
+best.lambda = mod.lasso$lambda.min
+best.lambda
+
+# Fit Lasso model using best lambda
+best.model = glmnet(xmat, Y, alpha = 1)
+predict(best.model, s = best.lambda, type = "coefficients")
+
+# Conclusion:
+# BIC and Lasso correctly identified X^7 as the only important predictor. 
+# Lasso automatically removed all irrelevant variables, preventing overfitting. 
+# Cp and Adjusted R² selected extra variables, but their impact was minimal.
+```
+
